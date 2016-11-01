@@ -1,0 +1,11 @@
+{
+  "name": "supercollider-js",
+  "version": "1.0.0",
+  "description": "an api for creating music using supercollider as a sound generator",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "david minnix",
+  "license": "GPL-3.0"
+}
