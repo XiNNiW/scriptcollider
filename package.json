@@ -2,10 +2,22 @@
   "name": "supercollider-js",
   "version": "1.0.0",
   "description": "an api for creating music using supercollider as a sound generator",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "test": "test"
+    "start": "node src/index",
+    "test": "mocha test --recursive --watch"
   },
   "author": "david minnix",
-  "license": "GPL-3.0"
+  "license": "GPL-3.0",
+  "dependencies": {
+    "node": "0.0.0",
+    "osc-msg": "^0.4.0",
+    "promise": "^7.1.1"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.1.2",
+    "proxyquire": "^1.7.10",
+    "sinon": "^1.17.6"
+  }
 }
