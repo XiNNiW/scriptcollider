@@ -33,12 +33,59 @@
 // console.log(exec(launchSupercolliderCommandString));
 
 SuperColliderServer = require("./super-collider-server");
-scServer = SuperColliderServer.create();
+SuperColliderSynthFactory = require('./super-collider-synth-factory');
+scServer = SuperColliderServer.instance();
 
 console.log(JSON.stringify(scServer.connectionProperties));
 //console.log(scServer.childProcess);
 
 
 setTimeout(()=>{
-  console.log("quitting");
-  scServer.quit();},2500);
+  //scServer.loadSynthDef("synthdefs/snare909");
+  let factory = SuperColliderSynthFactory.instance();
+  let snare909;
+  factory.create('snare909','synthdefs',{id:0},0).then(()=>{
+    snare909.play(0,1);
+  });
+  //scServer.quit();
+},2500);
+
+
+
+// beforeSong(()=>{
+//   //initialize instruments for song..
+//   //initialize mixer... plug in instruments
+// });
+//
+// section("intro",()=>{
+//   // main patterns
+//   beforePlay(()=>{
+//     //initialize instruments..
+//     // mixer
+//   });
+//   liveLoop("percussion",()=>{
+//     //some patterns
+//   });
+//   liveLoop("resampling",()=>{
+//     //more patterns
+//   });
+//   liveLoop("melody",()=>{
+//     //a melody
+//   });
+// }, {bars:64,beats:48.5,ticks:24});
+//
+// section("transition in",()=>{
+//   beforePlay(()=>{
+//     //initialize instruments..
+//     // mixer
+//   });
+//   liveLoop("percussion",()=>{
+//     //some patterns
+//   });
+//   liveLoop("resampling",()=>{
+//     //more patterns
+//   });
+//   liveLoop("melody",()=>{
+//     //a melody
+//   });
+// },{bars:64,beats:48.5,ticks:24});

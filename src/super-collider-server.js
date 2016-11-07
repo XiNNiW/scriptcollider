@@ -12,41 +12,82 @@ class _SuperColliderServer{
     };
     _server = server;
 
+
+    // _server.on("message", (buffer) => {
+    //   let message1 = oscUtility.decode(buffer, { strict: true, strip: true });
+    //   console.log("recieveing message from supercollider");
+    //
+    //   if (!message1.error) {
+    //     console.log(JSON.stringify(message1, null, 2));
+    //   }else{
+    //     console.log(message1.error);
+    //   }
+    // });
+
   };
   quit(){
+    console.log("quitting");
     let message = {
       address:"/quit",
       arguments:[]
     }
-    let buffer = oscUtility.encode(message);
-    _server.send(buffer,0,buffer.length,this.connectionProperties.port, this.connectionProperties.ip,(err)=>{
+    _encodeAndSendToServer(message, this.connectionProperties.port,this.connectionProperties.ip,(err)=>{
       console.log(err);
       _server.close();
     });
 
   };
-  newSynthSound(synthDefName,targetNodeId,synthParameters){
-    let address = "/s_new";
+  loadSynthDef(synthDefName){
+    console.log('loading synth: '+ this.synthName);
+    let message = {
+      address: "/d_load",
+      arguments: [synthDefName]
+    };
+    _encodeAndSendToServer(message,this.connectionProperties.port,this.connectionProperties.ip,(err)=>{console.log(err)});
+  };
+  newSynthSound(synthDefName,synthParameters,connectionParameters){
+    let graphPlacement = _setIfDefined(connectionParameters.graphPlacement,SuperColliderServer.Synth.ADD_TO_HEAD_OF_TARGET_GROUP);
+    let synthSoundId = _setIfDefined(connectionParameters.synthSoundId,-1);
+    let soundGraphInstructionArray = [
+      synthSoundId,
+      graphPlacement,
+      connectionParameters.target
+    ];
+
     let synthArgumentArray = [];
-    let graphPlacementInstructionArray = [-1,0,1];
     Object.keys(synthParameters).map((key)=>{
       synthArgumentArray.push("/"+key,synthParameters[key]);
     });
+
+    let messageArguments = ["/"+synthDefName];
+    messageArguments = messageArguments.concat(soundGraphInstructionArray);
+    messageArguments = messageArguments.concat(synthArgumentArray);
+
     let message = {
-      address: address,
-      arguments: graphPlacementInstructionArray.concat(synthArgumentArray)
+      address: "/s_new",
+      arguments: messageArguments
     };
-    let buffer = oscUtility.encode(message);
-    _server.send(buffer,0,buffer.length,this.connectionProperties.port,this.connectionProperties.ip,(err)=>{
-      console.log(err);
-    });
+    _encodeAndSendToServer(message,this.connectionProperties.port,this.connectionProperties.ip,(err)=>{console.log(err)});
   };
+};
+
+let _setIfDefined = function(value,defaultValue){
+  if(value !== undefined){
+    return value;
+  } else {
+    return defaultValue;
+  }
+}
+
+let _encodeAndSendToServer = function(message, port, ip,callback){
+  let buffer = oscUtility.encode(message);
+  _server.send(buffer,0,buffer.length,port,ip,callback);
 };
 
 let _instance = undefined;
 
 var SuperColliderServer = {
-  create: function(){
+  instance: function(){
     if(_instance===undefined){
       let ip = '127.0.0.1';
       let port = 57121;
@@ -56,6 +97,12 @@ var SuperColliderServer = {
       _instance = new _SuperColliderServer(udpServer,childProcess,ip,port);
     }
     return _instance;
+  },
+  Synth:{
+    ADD_TO_HEAD_OF_TARGET_GROUP:0,
+    ADD_TO_TAIL_OF_TARGET_GROUP:1,
+    ADD_BEFORE_TARGET_NODE:2,
+    ADD_AFTER_TARGET_NODE:3
   }
 };
 
