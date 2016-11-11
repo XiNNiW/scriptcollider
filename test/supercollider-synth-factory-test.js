@@ -5,6 +5,7 @@ var SuperColliderServer = require('../src/super-collider-server.js');
 var promise = require('promise');
 var SuperColliderSynthFactory;
 var SuperColliderSynth = require('../src/super-collider-synth.js');
+var NodePlacement = require('../src/super-collider-node-placement');
 
 describe("supercollider synth factory tests",()=>{
   var sandbox;
@@ -40,7 +41,7 @@ describe("supercollider synth factory tests",()=>{
     let expectedName = "909snare";
     let expectedPathToSynthDef = "the/path/to/yoursynths/"
     let expectedNode = {id:33};
-    let expectedGraphPlacement = SuperColliderServer.Synth.ADD_TO_HEAD_OF_TARGET_GROUP;
+    let expectedGraphPlacement = NodePlacement.ADD_TO_HEAD_OF_TARGET_GROUP;
     let expectedCustomArgs = {arg:"grr"};
     let aPromiseForASynth = theFactory.create(expectedName,expectedPathToSynthDef,expectedNode,expectedGraphPlacement,expectedCustomArgs);
     assert(stubServerInstance.loadSynthDef.called);

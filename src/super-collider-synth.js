@@ -1,5 +1,6 @@
 
 let SuperColliderServer = require('./super-collider-server')
+let NodePlacement = require('../src/super-collider-node-placement');
 
 class SuperColliderSynth{
   constructor(synthName,outputNode,graphPlacement,customArguments){
@@ -10,7 +11,7 @@ class SuperColliderSynth{
     this.customArguments = customArguments;
   };
   play(note,velocity,customArguments){
-    console.log('playing synth: '+this.synthName);
+    console.log('playing synth: '+this.name);
     let soundParameters = {
       freq:note,
       amp:velocity

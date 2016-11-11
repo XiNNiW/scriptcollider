@@ -2,6 +2,7 @@ var assert = require('assert');
 var proxyquire = require('proxyquire');
 var sinon = require('sinon');
 var assert = require('assert');
+var NodePlacement = require('../src/super-collider-node-placement.js');
 var SuperColliderServer = require('../src/super-collider-server.js');
 
 describe("super collider synth tests",()=>{
@@ -33,7 +34,7 @@ describe("super collider synth tests",()=>{
     let expectedNode = {
       id: 77
     };
-    let expectedPlacement = SuperColliderServer.Synth.ADD_TO_HEAD_OF_TARGET;
+    let expectedPlacement = NodePlacement.ADD_TO_HEAD_OF_TARGET;
     let expectedCustomArguments = {customArgument:"value"};
     let synth = new SuperColliderSynth(expectedName,expectedNode,expectedPlacement,expectedCustomArguments);
     assert(SuperColliderServer.instance.called,"get the server instance");
@@ -50,7 +51,7 @@ describe("super collider synth tests",()=>{
     let expectedNode = {
       id: 75
     };
-    let expectedGraphPlacement = SuperColliderServer.Synth.ADD_TO_HEAD_OF_TARGET_GROUP;
+    let expectedGraphPlacement = NodePlacement.ADD_TO_HEAD_OF_TARGET_GROUP;
     let synth = new SuperColliderSynth(expectedName,expectedNode,expectedGraphPlacement,{customArgument:"value"});
     assert(SuperColliderServer.instance.called,"gets the sc server instance");
     assert(!stubServerInstance.newSynthSound.called,"has not made a sound yet");

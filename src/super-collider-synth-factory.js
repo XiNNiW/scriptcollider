@@ -7,14 +7,16 @@ class _SuperColliderSynthFactory{
     this.superColliderServer = superColliderServer
   };
   create(synthName,pathToSynthDefinition,outputNode,graphPlacement,customArguments){
-    console.log("calling for the synth");
-    return new Promise((resolve,reject)=>{
-      this.superColliderServer.loadSynthDef(synthName,pathToSynthDefinition).then(()=>{
-        resolve(new SuperColliderSynth(synthName,outputNode,graphPlacement,customArguments));
-      }).catch((err)=>{
-        reject(error);
-      });
-    });
+    this.superColliderServer.loadSynthDef(pathToSynthDefinition+synthName,pathToSynthDefinition);
+    return new SuperColliderSynth(synthName,outputNode,graphPlacement,customArguments);
+    // console.log("calling for the synth");
+    // return new Promise((resolve,reject)=>{
+    //   this.superColliderServer.loadSynthDef(synthName,pathToSynthDefinition).then(()=>{
+    //     resolve(new SuperColliderSynth(synthName,outputNode,graphPlacement,customArguments));
+    //   }).catch((err)=>{
+    //     reject(error);
+    //   });
+    // });
   }
 };
 var _instance;

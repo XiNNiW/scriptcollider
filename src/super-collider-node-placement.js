@@ -1,0 +1,7 @@
+let NodePlacement = {
+  ADD_TO_HEAD_OF_TARGET_GROUP:0,
+  ADD_TO_TAIL_OF_TARGET_GROUP:1,
+  ADD_BEFORE_TARGET_NODE:2,
+  ADD_AFTER_TARGET_NODE:3
+};
+module.exports = NodePlacement;

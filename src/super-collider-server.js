@@ -1,6 +1,7 @@
 let exec = require('child_process').exec
 let udpService = require('dgram');
 let oscUtility = require('./open-sound-control/osc-utility.js');
+let NodePlacement = require('../src/super-collider-node-placement.js');
 
 let _server;
 class _SuperColliderServer{
@@ -37,35 +38,53 @@ class _SuperColliderServer{
     });
 
   };
-  loadSynthDef(synthDefName){
-    console.log('loading synth: '+ this.synthName);
+  loadSynthDef(synthDefPath){
+    console.log('loading synth: '+ synthDefPath);
     let message = {
       address: "/d_load",
-      arguments: [synthDefName]
+      args: [{
+        type:"string",
+        value: synthDefPath
+      }]
     };
     _encodeAndSendToServer(message,this.connectionProperties.port,this.connectionProperties.ip,(err)=>{console.log(err)});
   };
   newSynthSound(synthDefName,synthParameters,connectionParameters){
-    let graphPlacement = _setIfDefined(connectionParameters.graphPlacement,SuperColliderServer.Synth.ADD_TO_HEAD_OF_TARGET_GROUP);
+    let graphPlacement = _setIfDefined(connectionParameters.graphPlacement,NodePlacement.ADD_TO_HEAD_OF_TARGET_GROUP);
     let synthSoundId = _setIfDefined(connectionParameters.synthSoundId,-1);
     let soundGraphInstructionArray = [
-      synthSoundId,
-      graphPlacement,
-      connectionParameters.target
+      {type:"integer", value: synthSoundId},
+      {type: "integer", value: graphPlacement},
+      {type: "integer",value: connectionParameters.target}
     ];
 
     let synthArgumentArray = [];
     Object.keys(synthParameters).map((key)=>{
-      synthArgumentArray.push("/"+key,synthParameters[key]);
+      let keyType = "string";
+      switch(typeof synthParameters[key]){
+        case "string":
+          keyType = "string";
+          break;
+        case "number":
+          if(Number.isInteger(synthParameters[key])){
+            keyType = "integer";
+          } else {
+            keyType = "float"
+          }
+          break;
+      }
+
+      synthArgumentArray.push({type:"string", value: key});
+      synthArgumentArray.push({type:keyType, value: synthParameters[key]});
     });
 
-    let messageArguments = ["/"+synthDefName];
+    let messageArguments = [{type: "string", value: synthDefName}];
     messageArguments = messageArguments.concat(soundGraphInstructionArray);
     messageArguments = messageArguments.concat(synthArgumentArray);
 
     let message = {
       address: "/s_new",
-      arguments: messageArguments
+      args: messageArguments
     };
     _encodeAndSendToServer(message,this.connectionProperties.port,this.connectionProperties.ip,(err)=>{console.log(err)});
   };
@@ -81,6 +100,7 @@ let _setIfDefined = function(value,defaultValue){
 
 let _encodeAndSendToServer = function(message, port, ip,callback){
   let buffer = oscUtility.encode(message);
+  console.log(buffer);
   _server.send(buffer,0,buffer.length,port,ip,callback);
 };
 
@@ -91,18 +111,12 @@ var SuperColliderServer = {
     if(_instance===undefined){
       let ip = '127.0.0.1';
       let port = 57121;
-      let childProcess = exec("/Applications/SuperCollider/SuperCollider.app/Contents/MacOS/scsynth -u " + port);
+      let childProcess = exec("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth -u " + port);
       let udpServer = udpService.createSocket("udp4");
       udpServer.bind({address:ip,port:57123,exclusive:true});
       _instance = new _SuperColliderServer(udpServer,childProcess,ip,port);
     }
     return _instance;
-  },
-  Synth:{
-    ADD_TO_HEAD_OF_TARGET_GROUP:0,
-    ADD_TO_TAIL_OF_TARGET_GROUP:1,
-    ADD_BEFORE_TARGET_NODE:2,
-    ADD_AFTER_TARGET_NODE:3
   }
 };
 

@@ -5,7 +5,6 @@ module.exports = {
     return buffer;
   },
   decode:(buffer)=>{
-    console.log("hi");
     let message = openSoundControlMessage.decode(buffer);
     return message;
   }

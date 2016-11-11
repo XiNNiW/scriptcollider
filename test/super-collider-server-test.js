@@ -5,6 +5,7 @@ var SuperColliderServer;
 let child_process = require('child_process');
 let dgram = require('dgram');
 let oscUtility = require('../src/open-sound-control/osc-utility.js');
+let NodePlacement = require('../src/super-collider-node-placement.js');
 var sandbox;
 var execStub;
 var udpServerStub;
@@ -58,7 +59,7 @@ describe('SuperColliderServer Tests: ', function() {
     assert(server_one,"should be defined");
     assert(execStub.calledOnce,"should be created only once");
     assert(
-      execStub.calledWith("/Applications/SuperCollider/SuperCollider.app/Contents/MacOS/scsynth -u " + expectedPort),
+      execStub.calledWith("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth -u " + expectedPort),
       "should be called with the right args"
     );
   });
@@ -91,7 +92,7 @@ describe('SuperColliderServer Tests: ', function() {
     assert.deepEqual(server_one,server_two);
     assert(execStub.calledOnce,"should be created only once");
     assert(
-      execStub.calledWith("/Applications/SuperCollider/SuperCollider.app/Contents/MacOS/scsynth -u " + expectedPort),
+      execStub.calledWith("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth -u " + expectedPort),
       "should be called with the right args"
     );
   });
@@ -115,16 +116,6 @@ describe('SuperColliderServer Tests: ', function() {
     theCallback();
     assert(udpServerStub.close.called,"after callback close");
   });
-  it("defines instruction flags for adding sounds to the sc sound graph",()=>{
-    assert(SuperColliderServer.Synth.ADD_TO_HEAD_OF_TARGET_GROUP!==undefined,"instruction defined");
-    assert(SuperColliderServer.Synth.ADD_TO_TAIL_OF_TARGET_GROUP!==undefined,"instruction defined");
-    assert(SuperColliderServer.Synth.ADD_BEFORE_TARGET_NODE!==undefined,"instruction defined");
-    assert(SuperColliderServer.Synth.ADD_AFTER_TARGET_NODE!==undefined,"instruction defined");
-    assert.equal(SuperColliderServer.Synth.ADD_TO_HEAD_OF_TARGET_GROUP,0,"instruction correct");
-    assert.equal(SuperColliderServer.Synth.ADD_TO_TAIL_OF_TARGET_GROUP,1,"instruction correct");
-    assert.equal(SuperColliderServer.Synth.ADD_BEFORE_TARGET_NODE,2,"instruction correct");
-    assert.equal(SuperColliderServer.Synth.ADD_AFTER_TARGET_NODE,3,"instruction correct");
-  });
   it("can call s_new on the server and pass array of named arguments -- if no id provided let sc assign it by passing -1 -- if no position instruction tell sc to assign it to head of synth graph",()=>{
     let expectedPort = 57121;
     let expectedIp ='127.0.0.1';
@@ -136,14 +127,24 @@ describe('SuperColliderServer Tests: ', function() {
     let expectedSynthName = "name";
     server.newSynthSound(
       expectedSynthName,
-      {freq:440,amp:0.5,aCustomArg:"a value"},
+      {freq:440.5,amp:0.5,aCustomArg:"a value"},
       {target: targetNodeId}
     );
     assert(oscUtility.encode.called);
     assert(udpServerStub.send.called);
     assert.equal(oscUtility.encode.getCall(0).args[0].address,"/s_new");
-    let expectedArguments = ["/"+expectedSynthName,-1,0,targetNodeId,"/freq",440,"/amp",0.5,"/aCustomArg","a value"];
-    assert.deepEqual(oscUtility.encode.getCall(0).args[0].arguments,expectedArguments);
+    let expectedArguments = [
+      {type:"string",value: expectedSynthName},
+      {type:"integer",value: -1},
+      {type:"integer",value: NodePlacement.ADD_TO_HEAD_OF_TARGET_GROUP},
+      {type:"integer",value:targetNodeId},
+      {type:"string",value:"freq"},
+      {type:"float",value:440.5},
+      {type:"string",value:"amp"},
+      {type:"float",value:0.5},
+      {type:"string",value:"aCustomArg"},
+      {type:"string",value:"a value"}];
+    assert.deepEqual(oscUtility.encode.getCall(0).args[0].args,expectedArguments);
     checkUdpMessageSent_returnCallback(udpServerStub, expectedPort, expectedIp);
   });
   it("can call s_new on the server and pass array of named arguments -- instructions for audio graph placement -- ADD_TO_HEAD_OF_TARGET",()=>{
@@ -158,17 +159,27 @@ describe('SuperColliderServer Tests: ', function() {
     let expectedSynthSoundId = 500;
     server.newSynthSound(
       expectedSynthName,
-      {freq:440,amp:0.5,aCustomArg:"a value"},
+      {freq:440.5,amp:0.5,aCustomArg:"a value"},
       {
         target: targetNodeId,
         synthSoundId:expectedSynthSoundId,
-        graphPlacement:SuperColliderServer.Synth.ADD_TO_HEAD_OF_TARGET_GROUP
+        graphPlacement: NodePlacement.ADD_TO_HEAD_OF_TARGET_GROUP
       });
     assert(oscUtility.encode.called);
     assert(udpServerStub.send.called);
     assert.equal(oscUtility.encode.getCall(0).args[0].address,"/s_new");
-    let expectedArguments = ["/"+expectedSynthName,expectedSynthSoundId,0,targetNodeId,"/freq",440,"/amp",0.5,"/aCustomArg","a value"];
-    assert.deepEqual(oscUtility.encode.getCall(0).args[0].arguments,expectedArguments);
+    let expectedArguments = [
+      {type:"string",value: expectedSynthName},
+      {type:"integer",value: expectedSynthSoundId},
+      {type:"integer",value: NodePlacement.ADD_TO_HEAD_OF_TARGET_GROUP},
+      {type:"integer",value:targetNodeId},
+      {type:"string",value:"freq"},
+      {type:"float",value:440.5},
+      {type:"string",value:"amp"},
+      {type:"float",value:0.5},
+      {type:"string",value:"aCustomArg"},
+      {type:"string",value:"a value"}];
+    assert.deepEqual(oscUtility.encode.getCall(0).args[0].args,expectedArguments);
     checkUdpMessageSent_returnCallback(udpServerStub, expectedPort, expectedIp);
   });
   it("can call s_new on the server and pass array of named arguments -- instructions for audio graph placement -- ADD_TO_TAIL_OF_TARGET_GROUP",()=>{
@@ -183,17 +194,27 @@ describe('SuperColliderServer Tests: ', function() {
     let expectedSynthSoundId = 234;
     server.newSynthSound(
       expectedSynthName,
-      {freq:440,amp:0.5,aCustomArg:"a value"},
+      {freq:440.5,amp:0.5,aCustomArg:"a value"},
       {
         target: targetNodeId,
         synthSoundId:expectedSynthSoundId,
-        graphPlacement:SuperColliderServer.Synth.ADD_TO_TAIL_OF_TARGET_GROUP
+        graphPlacement: NodePlacement.ADD_TO_TAIL_OF_TARGET_GROUP
       });
     assert(oscUtility.encode.called);
     assert(udpServerStub.send.called);
     assert.equal(oscUtility.encode.getCall(0).args[0].address,"/s_new");
-    let expectedArguments = ["/"+expectedSynthName,expectedSynthSoundId,1,targetNodeId,"/freq",440,"/amp",0.5,"/aCustomArg","a value"];
-    assert.deepEqual(oscUtility.encode.getCall(0).args[0].arguments,expectedArguments);
+    let expectedArguments = [
+      {type:"string",value: expectedSynthName},
+      {type:"integer",value: expectedSynthSoundId},
+      {type:"integer",value: NodePlacement.ADD_TO_TAIL_OF_TARGET_GROUP},
+      {type:"integer",value:targetNodeId},
+      {type:"string",value:"freq"},
+      {type:"float",value:440.5},
+      {type:"string",value:"amp"},
+      {type:"float",value:0.5},
+      {type:"string",value:"aCustomArg"},
+      {type:"string",value:"a value"}];
+    assert.deepEqual(oscUtility.encode.getCall(0).args[0].args,expectedArguments);
     checkUdpMessageSent_returnCallback(udpServerStub, expectedPort, expectedIp);
   });
   it("can call s_new on the server and pass array of named arguments -- instructions for audio graph placement -- ADD_BEFORE_TARGET_NODE",()=>{
@@ -208,17 +229,27 @@ describe('SuperColliderServer Tests: ', function() {
     let expectedSynthSoundId = 234;
     server.newSynthSound(
       expectedSynthName,
-      {freq:440,amp:0.5,aCustomArg:"a value"},
+      {freq:440.5,amp:0.5,aCustomArg:"a value"},
       {
         target: targetNodeId,
         synthSoundId:expectedSynthSoundId,
-        graphPlacement:SuperColliderServer.Synth.ADD_BEFORE_TARGET_NODE
+        graphPlacement: NodePlacement.ADD_BEFORE_TARGET_NODE
       });
     assert(oscUtility.encode.called);
     assert(udpServerStub.send.called);
     assert.equal(oscUtility.encode.getCall(0).args[0].address,"/s_new");
-    let expectedArguments = ["/"+expectedSynthName,expectedSynthSoundId,2,targetNodeId,"/freq",440,"/amp",0.5,"/aCustomArg","a value"];
-    assert.deepEqual(oscUtility.encode.getCall(0).args[0].arguments,expectedArguments);
+    let expectedArguments = [
+      {type:"string",value:expectedSynthName},
+      {type:"integer",value:expectedSynthSoundId},
+      {type:"integer",value: NodePlacement.ADD_BEFORE_TARGET_NODE},
+      {type:"integer",value:targetNodeId},
+      {type:"string",value:"freq"},
+      {type:"float",value:440.5},
+      {type:"string",value:"amp"},
+      {type:"float",value:0.5},
+      {type:"string",value:"aCustomArg"},
+      {type:"string",value:"a value"}];
+    assert.deepEqual(oscUtility.encode.getCall(0).args[0].args,expectedArguments);
     checkUdpMessageSent_returnCallback(udpServerStub, expectedPort, expectedIp);
   });
   it("can call s_new on the server and pass array of named arguments -- instructions for audio graph placement -- ADD_BEFORE_TARGET_NODE",()=>{
@@ -233,20 +264,30 @@ describe('SuperColliderServer Tests: ', function() {
     let expectedSynthSoundId = 4;
     server.newSynthSound(
       expectedSynthName,
-      {freq:440,amp:0.5,aCustomArg:"a value"},
+      {freq:440.5,amp:0.5,aCustomArg:"a value"},
       {
         target: targetNodeId,
         synthSoundId:expectedSynthSoundId,
-        graphPlacement:SuperColliderServer.Synth.ADD_AFTER_TARGET_NODE
+        graphPlacement: NodePlacement.ADD_AFTER_TARGET_NODE
       });
     assert(oscUtility.encode.called);
     assert(udpServerStub.send.called);
     assert.equal(oscUtility.encode.getCall(0).args[0].address,"/s_new");
-    let expectedArguments = ["/"+expectedSynthName,expectedSynthSoundId,3,targetNodeId,"/freq",440,"/amp",0.5,"/aCustomArg","a value"];
-    assert.deepEqual(oscUtility.encode.getCall(0).args[0].arguments,expectedArguments);
+    let expectedArguments = [
+      {type:"string",value: expectedSynthName},
+      {type:"integer",value:expectedSynthSoundId},
+      {type:"integer",value:3},
+      {type:"integer",value:targetNodeId},
+      {type:"string",value:"freq"},
+      {type:"float",value:440.5},
+      {type:"string",value:"amp"},
+      {type:"float",value:0.5},
+      {type:"string",value:"aCustomArg"},
+      {type:"string",value:"a value"}];
+    assert.deepEqual(oscUtility.encode.getCall(0).args[0].args,expectedArguments);
     checkUdpMessageSent_returnCallback(udpServerStub, expectedPort, expectedIp);
   });
-  it("can call d_load to tell sc server to load a synth def", ()=>{
+  it("can call d_load to tell sc server to load a synth def -- returns a promise that resolves when /done recieved", ()=>{
     let expectedPort = 57121;
     let expectedIp ='127.0.0.1';
     var server = SuperColliderServer.instance();
@@ -254,14 +295,23 @@ describe('SuperColliderServer Tests: ', function() {
     assert(!oscUtility.encode.called);
     assert(!udpServerStub.send.called);
     let expectedName = "synthDefName"
-    server.loadSynthDef(expectedName);
-    assert(oscUtility.encode.called);
-    assert(udpServerStub.send.called);
-    assert.equal(oscUtility.encode.getCall(0).args[0].address,"/d_load");
-    let expectedArguments = [expectedName];
-    assert.deepEqual(oscUtility.encode.getCall(0).args[0].arguments,expectedArguments);
-    let theCallback = checkUdpMessageSent_returnCallback(udpServerStub, expectedPort, expectedIp);
+    server.loadSynthDef(expectedName).then(()=>{
+      assert(oscUtility.encode.called);
+      assert(udpServerStub.send.called);
+      assert.equal(oscUtility.encode.getCall(0).args[0].address,"/d_load");
+      let expectedArguments = [{
+        type: "string",
+        value: expectedName
+      }];
+      assert.deepEqual(oscUtility.encode.getCall(0).args[0].args, expectedArguments);
+      let theCallback = checkUdpMessageSent_returnCallback(udpServerStub, expectedPort, expectedIp);
+    }).catch((err)=>{
+      assert.equal(err,undefined);
+    });
+
+    
   });
+
   let checkUdpMessageSent_returnCallback = function(udpServerStub, expectedPort, expectedIp){
     assert.equal(udpServerStub.send.getCall(0).args[0],"the buffer","sends the results of encode");
     assert.equal(udpServerStub.send.getCall(0).args[1],0, "no buffer offset");

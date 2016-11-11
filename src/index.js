@@ -43,10 +43,17 @@ console.log(JSON.stringify(scServer.connectionProperties));
 setTimeout(()=>{
   //scServer.loadSynthDef("synthdefs/snare909");
   let factory = SuperColliderSynthFactory.instance();
-  let snare909;
-  factory.create('snare909','synthdefs',{id:0},0).then(()=>{
-    snare909.play(0,1);
-  });
+  // let snare909;
+  // factory.create('synthdefs/snare909',{id:0},0).then((synth)=>{
+  //   snare909 = synth;
+  //   console.log("playing now");
+  //   snare909.play(0,1);
+  // });
+  let snare909 = factory.create('snare909',"synthdefs/",{id:0},0);
+  setTimeout(()=>{
+    snare909.play(0,1,{});
+  },1000);
+
   //scServer.quit();
 },2500);
 
