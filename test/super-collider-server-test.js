@@ -6,6 +6,7 @@ let child_process = require('child_process');
 let dgram = require('dgram');
 let oscUtility = require('../src/open-sound-control/osc-utility.js');
 let NodePlacement = require('../src/super-collider-node-placement.js');
+let SuperColliderAsyncCommandMessanger  = require("../src/super-collider-async-command-messanger.js");
 var sandbox;
 var execStub;
 var udpServerStub;
@@ -55,13 +56,14 @@ describe('SuperColliderServer Tests: ', function() {
   it('should launch sc server on init and return a promise for a server object', function() {
     let expectedPort = 57121;
     let expectedIp ='127.0.0.1';
-    var server_one = SuperColliderServer.instance();
-    assert(server_one,"should be defined");
+    var server = SuperColliderServer.instance();
+    assert(server,"should be defined");
     assert(execStub.calledOnce,"should be created only once");
     assert(
       execStub.calledWith("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth -u " + expectedPort),
       "should be called with the right args"
     );
+
   });
   it("should open a udp connection upon init",()=>{
     let expectedSupercolliderPort = 57121;
@@ -74,14 +76,19 @@ describe('SuperColliderServer Tests: ', function() {
     assert(udpServerStub.bind.calledOnce);
     assert.deepEqual(udpServerStub.bind.getCall(0).args[0],{address:expectedIp,port:expectedListeningPort,exclusive:true});
   });
-  it('should store connection properties', function() {
+  it('should store connection properties -- and pass to collaborators', function() {
     let expectedPort = 57121;
     let expectedIp ='127.0.0.1';
-    var server_one = SuperColliderServer.instance();
-    assert(server_one,"should be defined");
-    assert(server_one.childProcess,"the connection object","should store the port");
-    assert(server_one.connectionProperties.port,expectedPort,"should store the port");
-    assert(server_one.connectionProperties.ip,expectedIp,"should store the port");
+    var server = SuperColliderServer.instance();
+    assert(server,"should be defined");
+    assert(server.childProcess,"the connection object","should store the port");
+    assert(server.connectionProperties.port,expectedPort,"should store the port");
+    assert(server.connectionProperties.ip,expectedIp,"should store the port");
+    assert(server.commandMessanger!==undefined);
+    console.log(server.commandMessanger);
+    assert.equal(server.commandMessanger.ip,expectedIp);
+    assert.equal(server.commandMessanger.port,expectedPort);
+    assert.deepEqual(server.commandMessanger.server,udpServerStub);
   });
   it('should be a singleton', function() {
     let expectedPort = 57121;
@@ -287,29 +294,33 @@ describe('SuperColliderServer Tests: ', function() {
     assert.deepEqual(oscUtility.encode.getCall(0).args[0].args,expectedArguments);
     checkUdpMessageSent_returnCallback(udpServerStub, expectedPort, expectedIp);
   });
-  it("can call d_load to tell sc server to load a synth def -- returns a promise that resolves when /done recieved", ()=>{
-    let expectedPort = 57121;
-    let expectedIp ='127.0.0.1';
+
+  it("can call d_load on the scserver and returns a promise for when the synth is loaded",(done)=>{
     var server = SuperColliderServer.instance();
-    assert(server,"should be defined");
-    assert(!oscUtility.encode.called);
-    assert(!udpServerStub.send.called);
-    let expectedName = "synthDefName"
-    server.loadSynthDef(expectedName).then(()=>{
-      assert(oscUtility.encode.called);
-      assert(udpServerStub.send.called);
-      assert.equal(oscUtility.encode.getCall(0).args[0].address,"/d_load");
-      let expectedArguments = [{
-        type: "string",
-        value: expectedName
-      }];
-      assert.deepEqual(oscUtility.encode.getCall(0).args[0].args, expectedArguments);
-      let theCallback = checkUdpMessageSent_returnCallback(udpServerStub, expectedPort, expectedIp);
+    server.commandMessanger = {execute: sinon.stub()};
+    server.commandMessanger.execute.returns(Promise.resolve());
+    let synthdefName = "snare909";
+    let fullSynthPath = "path/to/the/synth/def/"+synthdefName;
+
+    assert(!server.commandMessanger.execute.called);
+    let promiseOfASynth = server.loadSynthDef(fullSynthPath);
+
+    assert(server.commandMessanger.execute.called);
+    let expectedMessage = {
+      address: "/d_load",
+      args: [{
+        type:"string",
+        value: fullSynthPath
+      }]
+    };
+    assert.deepEqual(server.commandMessanger.execute.getCall(0).args,[expectedMessage])
+    promiseOfASynth.then(()=>{
+      done();
     }).catch((err)=>{
-      assert.equal(err,undefined);
+      assert(err===undefined);
+      done(err);
     });
 
-    
   });
 
   let checkUdpMessageSent_returnCallback = function(udpServerStub, expectedPort, expectedIp){

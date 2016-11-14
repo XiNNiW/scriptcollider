@@ -2,6 +2,7 @@ let exec = require('child_process').exec
 let udpService = require('dgram');
 let oscUtility = require('./open-sound-control/osc-utility.js');
 let NodePlacement = require('../src/super-collider-node-placement.js');
+let SuperColliderAsyncCommandMessanger = require('./super-collider-async-command-messanger.js');
 
 let _server;
 class _SuperColliderServer{
@@ -12,18 +13,19 @@ class _SuperColliderServer{
       ip : ip
     };
     _server = server;
+    this.commandMessanger = new SuperColliderAsyncCommandMessanger(_server, port, ip);
 
 
-    // _server.on("message", (buffer) => {
-    //   let message1 = oscUtility.decode(buffer, { strict: true, strip: true });
-    //   console.log("recieveing message from supercollider");
-    //
-    //   if (!message1.error) {
-    //     console.log(JSON.stringify(message1, null, 2));
-    //   }else{
-    //     console.log(message1.error);
-    //   }
-    // });
+    _server.on("message", (buffer) => {
+      let message1 = oscUtility.decode(buffer, { strict: true, strip: true });
+      console.log("recieveing message from supercollider");
+
+      if (!message1.error) {
+        console.log(JSON.stringify(message1, null, 2));
+      }else{
+        console.log(message1.error);
+      }
+    });
 
   };
   quit(){
@@ -39,7 +41,6 @@ class _SuperColliderServer{
 
   };
   loadSynthDef(synthDefPath){
-    console.log('loading synth: '+ synthDefPath);
     let message = {
       address: "/d_load",
       args: [{
@@ -47,7 +48,7 @@ class _SuperColliderServer{
         value: synthDefPath
       }]
     };
-    _encodeAndSendToServer(message,this.connectionProperties.port,this.connectionProperties.ip,(err)=>{console.log(err)});
+    return this.commandMessanger.execute(message);
   };
   newSynthSound(synthDefName,synthParameters,connectionParameters){
     let graphPlacement = _setIfDefined(connectionParameters.graphPlacement,NodePlacement.ADD_TO_HEAD_OF_TARGET_GROUP);

@@ -45,7 +45,7 @@ describe("supercollider synth factory tests",()=>{
     let expectedCustomArgs = {arg:"grr"};
     let aPromiseForASynth = theFactory.create(expectedName,expectedPathToSynthDef,expectedNode,expectedGraphPlacement,expectedCustomArgs);
     assert(stubServerInstance.loadSynthDef.called);
-    assert(stubServerInstance.loadSynthDef.getCall(0).args[0],expectedName);
+    assert.deepEqual(stubServerInstance.loadSynthDef.getCall(0).args,[expectedPathToSynthDef+expectedName]);
 
     return aPromiseForASynth.then((theSynth)=>{
       assert.equal(theSynth.name,expectedName);

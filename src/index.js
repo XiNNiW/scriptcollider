@@ -49,10 +49,15 @@ setTimeout(()=>{
   //   console.log("playing now");
   //   snare909.play(0,1);
   // });
-  let snare909 = factory.create('snare909',"synthdefs/",{id:0},0);
-  setTimeout(()=>{
-    snare909.play(0,1,{});
-  },1000);
+  // let snare909 = factory.create('snare909',"synthdefs/",{id:0},0);
+  // setTimeout(()=>{
+  //   snare909.play(0,1,{});
+  // },1000);
+  factory.create('snare909','synthdefs/',{id:0},0).then((snare909)=>{
+    snare909.play(0,1);
+  }).catch((err)=>{
+    console.log("promise was rejected: "+err)
+  });
 
   //scServer.quit();
 },2500);
