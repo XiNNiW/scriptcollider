@@ -1,11 +1,11 @@
 var assert = require('assert');
 var sinon = require('sinon');
 var proxyquire = require('proxyquire');
-var SuperColliderServer = require('../src/super-collider-server.js');
+var SuperColliderServer = require('../../src/super-collider/super-collider-server.js');
 var promise = require('promise');
 var SuperColliderSynthFactory;
-var SuperColliderSynth = require('../src/super-collider-synth.js');
-var NodePlacement = require('../src/super-collider-node-placement');
+var SuperColliderSynth = require('../../src/super-collider/super-collider-synth.js');
+var NodePlacement = require('../../src/super-collider/super-collider-node-placement');
 
 describe("supercollider synth factory tests",()=>{
   var sandbox;
@@ -19,8 +19,8 @@ describe("supercollider synth factory tests",()=>{
     let stubServer = sandbox.stub(SuperColliderServer,"instance",()=>{
       return stubServerInstance;
     });
-    SuperColliderSynthFactory = proxyquire('../src/super-collider-synth-factory.js',{
-      '../src/super-collider-server.js':stubServer
+    SuperColliderSynthFactory = proxyquire('../../src/super-collider/super-collider-synth-factory.js',{
+      './super-collider-server.js':stubServer
     });
   });
   afterEach(()=>{

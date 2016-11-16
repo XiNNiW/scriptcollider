@@ -1,6 +1,6 @@
 
 let SuperColliderServer = require('./super-collider-server')
-let NodePlacement = require('../src/super-collider-node-placement');
+let NodePlacement = require('./super-collider-node-placement');
 
 class SuperColliderSynth{
   constructor(synthName,outputNode,graphPlacement,customArguments){
@@ -19,10 +19,12 @@ class SuperColliderSynth{
     let connectionParameters = {
       target: this.outputNode.id,
       graphPlacement: this.graphPlacement
-    }
-    Object.keys(customArguments).map((key)=>{
-      soundParameters[key] = customArguments[key];
-    });
+    };
+    if(customArguments!==undefined && customArguments!== null){
+      Object.keys(customArguments).map((key)=>{
+        soundParameters[key] = customArguments[key];
+      });
+    };
     this.server.newSynthSound(this.name,soundParameters,connectionParameters);
   };
 };

@@ -1,3 +1,4 @@
+let oscUtility = require('./open-sound-control/osc-utility.js');
 //
 // let exec = require('child_process').exec;
 // //let spawn = require('child_process').spawn;
@@ -32,8 +33,8 @@
 // console.log(launchSupercolliderCommandString);
 // console.log(exec(launchSupercolliderCommandString));
 
-SuperColliderServer = require("./super-collider-server");
-SuperColliderSynthFactory = require('./super-collider-synth-factory');
+SuperColliderServer = require("./super-collider/super-collider-server");
+SuperColliderSynthFactory = require('./super-collider/super-collider-synth-factory');
 scServer = SuperColliderServer.instance();
 
 console.log(JSON.stringify(scServer.connectionProperties));
@@ -41,6 +42,18 @@ console.log(JSON.stringify(scServer.connectionProperties));
 
 
 setTimeout(()=>{
+
+  scServer.commandMessanger.server.on("message", (buffer) => {
+    let message1 = oscUtility.decode(buffer, { strict: true, strip: true });
+    console.log("recieveing message from supercollider");
+
+    if (!message1.error) {
+      console.log(JSON.stringify(message1));
+    }else{
+      console.log(message1.error);
+    }
+  });
+
   //scServer.loadSynthDef("synthdefs/snare909");
   let factory = SuperColliderSynthFactory.instance();
   // let snare909;
@@ -53,11 +66,18 @@ setTimeout(()=>{
   // setTimeout(()=>{
   //   snare909.play(0,1,{});
   // },1000);
-  factory.create('snare909','synthdefs/',{id:0},0).then((snare909)=>{
-    snare909.play(0,1);
-  }).catch((err)=>{
-    console.log("promise was rejected: "+err)
-  });
+  factory.create('snare909','synthdefs/',{id:0},0).then(
+    (snare909)=>{
+      snare909.play(0,1);
+      setTimeout(()=>{
+        snare909.play(0,0.5);
+      },500);
+    }
+  ).catch(
+    (err)=>{
+      console.log("promise was rejected: "+err.stack)
+    }
+  );
 
   //scServer.quit();
 },2500);

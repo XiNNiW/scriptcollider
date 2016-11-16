@@ -4,9 +4,9 @@ var sinon = require('sinon');
 var SuperColliderServer;
 let child_process = require('child_process');
 let dgram = require('dgram');
-let oscUtility = require('../src/open-sound-control/osc-utility.js');
-let NodePlacement = require('../src/super-collider-node-placement.js');
-let SuperColliderAsyncCommandMessanger  = require("../src/super-collider-async-command-messanger.js");
+let oscUtility = require('../../src/open-sound-control/osc-utility.js');
+let NodePlacement = require('../../src/super-collider/super-collider-node-placement.js');
+let SuperColliderAsyncCommandMessanger  = require("../../src/super-collider/super-collider-async-command-messanger.js");
 var sandbox;
 var execStub;
 var udpServerStub;
@@ -39,7 +39,7 @@ describe('SuperColliderServer Tests: ', function() {
     }
 
     SuperColliderServer = proxyquire(
-      '../src/super-collider-server.js',
+      '../../src/super-collider/super-collider-server.js',
       {
         'child_process':{exec: execStub},
         'dgram':{createSocket: createSocketStub},

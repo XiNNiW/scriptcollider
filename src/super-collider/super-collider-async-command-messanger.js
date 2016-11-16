@@ -1,5 +1,5 @@
-let oscUtility = require('./open-sound-control/osc-utility.js');
-
+let oscUtility = require('../open-sound-control/osc-utility.js');
+let _nextRequestId = 1;
 class SuperColliderAsyncCommandMessanger{
   constructor(server,port,ip){
     this.server = server;
@@ -7,7 +7,7 @@ class SuperColliderAsyncCommandMessanger{
     this.ip = ip;
   }
   execute(messageToSend){
-    let idForRequest = 100;
+    let idForRequest = _nextRequestId++;
     let promiseOfServerCommand = new Promise((resolve,reject)=>{
       this.server.on("message",(buffer)=>{
         let messageFromServer = oscUtility.decode(buffer);
@@ -42,6 +42,7 @@ class SuperColliderAsyncCommandMessanger{
 }
 
 let _encodeAndSendToServer = function(server,message, port, ip,callback){
+  console.log("encoding and sending to server");
   let buffer = oscUtility.encode(message);
   server.send(buffer,0,buffer.length,port,ip,callback);
 };

@@ -10,9 +10,14 @@ class _SuperColliderSynthFactory{
     // this.superColliderServer.loadSynthDef(pathToSynthDefinition+synthName,pathToSynthDefinition);
     // return new SuperColliderSynth(synthName,outputNode,graphPlacement,customArguments);
     // console.log("calling for the synth");
-    return this.superColliderServer.loadSynthDef(pathToSynthDefinition+synthName).then(()=>{
-      return new SuperColliderSynth(synthName,outputNode,graphPlacement,customArguments);
-    });
+    return this.superColliderServer.loadSynthDef(pathToSynthDefinition+synthName).then(
+      ()=>{
+        return new SuperColliderSynth(synthName,outputNode,graphPlacement,customArguments);
+      },
+      (reasonForRejection)=>{
+        console.log(JSON.stringify(reasonForRejection));
+      }
+    );
     // return new Promise((resolve,reject)=>{
     //   this.superColliderServer.loadSynthDef(pathToSynthDefinition+synthName).then(()=>{
     //     resolve(new SuperColliderSynth(synthName,outputNode,graphPlacement,customArguments));

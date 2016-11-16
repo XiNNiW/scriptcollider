@@ -1,5 +1,5 @@
 var assert = require('assert');
-var NodePlacement = require('../src/super-collider-node-placement.js');
+var NodePlacement = require('../../src/super-collider/super-collider-node-placement.js');
 
 describe('SuperColliderServer Tests: ', () => {
   it('defines valid instructions for placing nodes in super colliders sound graph', ()=>{

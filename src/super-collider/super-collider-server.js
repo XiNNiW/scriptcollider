@@ -1,7 +1,7 @@
 let exec = require('child_process').exec
 let udpService = require('dgram');
-let oscUtility = require('./open-sound-control/osc-utility.js');
-let NodePlacement = require('../src/super-collider-node-placement.js');
+let oscUtility = require('../open-sound-control/osc-utility.js');
+let NodePlacement = require('./super-collider-node-placement.js');
 let SuperColliderAsyncCommandMessanger = require('./super-collider-async-command-messanger.js');
 
 let _server;
@@ -14,18 +14,6 @@ class _SuperColliderServer{
     };
     _server = server;
     this.commandMessanger = new SuperColliderAsyncCommandMessanger(_server, port, ip);
-
-
-    _server.on("message", (buffer) => {
-      let message1 = oscUtility.decode(buffer, { strict: true, strip: true });
-      console.log("recieveing message from supercollider");
-
-      if (!message1.error) {
-        console.log(JSON.stringify(message1, null, 2));
-      }else{
-        console.log(message1.error);
-      }
-    });
 
   };
   quit(){
